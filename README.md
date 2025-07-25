@@ -17,15 +17,12 @@ Welcome! This repository is your starting point for the **Agentic AI App Hackath
 ## 🚀 Getting Started
 
 1. **Clone / Fork** this template.  Very Important. Fork Name MUST be the same name as the teamn name
-2. **Install dependencies**  
+2. Build and Run Docker
    ```bash
-   # Conda
-   conda env create -f environment.yml
-   conda activate agentic-hackathon
-
-   #—or Docker—
-   docker build -t agentic-agent .
-   docker run --rm -it agentic-agent bash
+   make build
+   make run
+   ```
+3. Load up the website: [http://localhost:5173](http://localhost:5173/)
 
 ## 📂 Folder Layout
 
