@@ -1,11 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>v1</title>
-  </head>
-  <body>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>v1</title>
+  <style>
+    #photos {
+      display: flex;
+      width: 100%;
+      column-gap: 6px;
+      row-gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .photo-container {
+      position: relative;
+    }
+
+    .photo-container button {
+      position: absolute;
+      top:0;
+      right:0;
+    }
+
+    .close {
+      background: none;
+      border: none;
+      color: white;
+    }
+
+    .close::before {
+      content: "\2715"
+    }
+  </style>
+</head>
+
+<body>
+  <div id="video-container">
     <video id="video" width="720" height="560" autoplay muted></video>
-    <script type="module" src="./src/camera.js"></script>
-  </body>
+  </div>
+  <div>
+    <button id="capture">Click!</button>
+  </div>
+  <div id="photos"></div>
+  <script type="module" src="./src/camera.js"></script>
+</body>
+
 </html>

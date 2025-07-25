@@ -1,6 +1,12 @@
 import * as faceapi from 'face-api.js';
 
 const video = document.getElementById('video');
+const photo = document.getElementById("photo");
+
+document.querySelector("#capture").addEventListener("click", e => {
+  takePicture();
+  e.preventDefault();
+});
 
 async function start() {
   await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
@@ -18,8 +24,8 @@ async function start() {
   video.addEventListener('play', () => {
     const canvas = faceapi.createCanvasFromMedia(video);
 
-    Object.assign(canvas.style, { position: 'absolute', top: 0, left: 0 });
-    document.body.appendChild(canvas);
+    Object.assign(canvas.style, { position: 'absolute', top: 0, left: '8px' });
+    document.querySelector("#video-container").appendChild(canvas);
     const displaySize = { width: video.width, height: video.height };
     faceapi.matchDimensions(canvas, displaySize);
 
@@ -37,14 +43,36 @@ async function start() {
         faceapi.draw.drawDetections(canvas, resized);
         faceapi.draw.drawFaceLandmarks(canvas, resized);
         faceapi.draw.drawFaceExpressions(canvas, resized);
-
-        const faceMatcher = new faceapi.FaceMatcher(detections.descriptor);
-        const bestMatch = faceMatcher.findBestMatch(detections.descriptor);
-        console.log(bestMatch.toString());
       }
 
     }, 500);
   });
+}
+
+function takePicture() {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (video.videoWidth && video.videoHeight) {
+    canvas.width = video.videoWidth / 2;
+    canvas.height = video.videoHeight / 2;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const photoContainer = document.createElement("div");
+    photoContainer.className = "photo-container";
+    const photo = document.createElement("img");
+    photo.setAttribute("src", canvas.toDataURL("image/png"));
+    photoContainer.appendChild(photo);
+
+    const btn = document.createElement("button");
+    btn.className= "close";
+    btn.addEventListener("click", (e) => {
+      e.target.closest(".photo-container").remove();
+    })
+
+    photoContainer.appendChild(btn);
+    document.querySelector("#photos").appendChild(photoContainer);
+
+  }
 }
 
 start();
