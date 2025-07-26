@@ -1,4 +1,5 @@
 import * as deeplab from '@tensorflow-models/deeplab';
+import { pipeline, SamModel, AutoProcessor, RawImage } from '@huggingface/transformers';
 
 const video = document.getElementById('video');
 const canvas = document.getElementById('output');
@@ -12,13 +13,6 @@ document.querySelector("#capture").addEventListener("click", e => {
 async function start() {
   const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
   video.srcObject = stream;
-
-  // const model = await deeplab.load({ base: 'ade20k', quantizationBytes: 4 });
-  // const legend = model.getLegend(); // Array of {id, name, color}
-  // console.log(legend);
-  // video.addEventListener('play', () => {
-
-  // });
 }
 
 async function takePicture() {
@@ -55,36 +49,55 @@ async function takePicture() {
   }
 }
 
-async function segment(img) {
-  const model = await deeplab.load({ base: 'ade20k', quantizationBytes: 4 });
+async function segment(imgElement) {
+  const modelId = 'Xenova/slimsam-77-uniform';
+  const model = await SamModel.from_pretrained(modelId, {
+    device: 'webgpu',
+    dtype: 'fp16'  // or other supported types
+  });
+  const processor = await AutoProcessor.from_pretrained(modelId);
 
-  // Run segmentation
-  const segmentation = await model.segment(img);
+  // Load your image
+  const rawImage = await RawImage.read(imgElement.src);
 
-  // Create a temporary canvas to draw the segmentation map at its native size
-  const tempCanvas = document.createElement("canvas");
-  tempCanvas.width = segmentation.width;
-  tempCanvas.height = segmentation.height;
-  const tempCtx = tempCanvas.getContext("2d");
+  // Provide a point prompt: e.g. [x, y] coordinates
+  const inputPoints = [[[160, 120]]]; // Example point, adjust as needed
 
-  const imageData = new ImageData(
-    new Uint8ClampedArray(segmentation.segmentationMap.map(v => v * 255)), // Convert to grayscale
-    segmentation.width,
-    segmentation.height
+  const inputs = await processor(rawImage, { input_points: inputPoints });
+
+  const outputs = await model(inputs);
+
+  const masks = await processor.post_process_masks(
+    outputs.pred_masks,
+    inputs.original_sizes,
+    inputs.reshaped_input_sizes
   );
-  tempCtx.putImageData(imageData, 0, 0);
 
-  // Now draw the temp canvas scaled onto a final canvas matching the image size
-  const finalCanvas = document.createElement("canvas");
-  finalCanvas.width = img.width;
-  finalCanvas.height = img.height;
-  const finalCtx = finalCanvas.getContext("2d");
+  const maskData = RawImage.fromTensor(masks[0][0].mul(255));
+  await maskData.save('mask.png');
 
-  // Draw scaled segmentation map onto the final canvas
-  finalCtx.drawImage(tempCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
+  const { height, width } = maskData;
+  const rgb = maskData.data; // Flat array of RGB values
 
-  // Overlay canvas on top of the image
-  img.closest(".photo-container").appendChild(finalCanvas);
+  // Create new array with alpha channel added
+  const rgba = new Uint8ClampedArray(width * height * 4);
+
+  for (let i = 0, j = 0; i < rgb.length; i += 3, j += 4) {
+    rgba[j] = rgb[i];       // R
+    rgba[j + 1] = rgb[i + 1]; // G
+    rgba[j + 2] = rgb[i + 2]; // B
+    rgba[j + 3] = 127;        // A (semi-transparent)
+  }
+
+  const imageData = new ImageData(rgba, width, height);
+
+  // Draw on canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = imgElement.naturalWidth;
+  canvas.height = imgElement.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.putImageData(imageData, 0, 0);
+  imgElement.closest(".photo-container").appendChild(canvas);
 }
 
 start();
