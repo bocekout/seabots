@@ -1,7 +1,18 @@
 console.log('JS is running');
 
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import * as mobilenet from '@tensorflow-models/mobilenet';
 import '@tensorflow/tfjs';
+
+function waitForVideo(video) {
+  return new Promise(resolve => {
+    if (video.readyState >= 2) {
+      resolve();
+    } else {
+      video.addEventListener('loadeddata', () => resolve(), { once: true });
+    }
+  });
+}
 
 window.addEventListener('DOMContentLoaded', async () => {
   const video = document.getElementById('video-obj');
@@ -15,16 +26,33 @@ window.addEventListener('DOMContentLoaded', async () => {
     })
     .catch(err => console.error('Error accessing webcam:', err));
 
-  const model = await loadModel(); // <-- refactored
+  const modelType = 'coco-ssd'; // ← switch to 'mobilenet' here to test
+//   const modelType = 'mobilenet'; // ← switch to 'mobilenet' here to test
 
-  video.addEventListener('loadeddata', () => {
-    detectFrame(model, video, 'coco-ssd', 'coco-ssd-prefix');
-    console.log('video loaded');
+  const model = await loadModel(modelType);
+  await waitForVideo(video); 
+
+  video.addEventListener('playing', () => {
+    detectFrame(model, video, modelType, modelType + '-prefix');
+    console.log('TEMP DELAY');
+
+    console.log('video playing for modelType: ' + modelType);
   });
+
 });
 
-async function loadModel() {
-  return await cocoSsd.load(); // can later switch to other models here
+
+
+async function loadModel(modelType) {
+  if (modelType === 'mobilenet') {
+    const res = await mobilenet.load();
+    console.log('Mobilenet model loaded');
+    return res;
+  } else if (modelType === 'coco-ssd') {
+    return await cocoSsd.load();
+  } else {
+    throw new Error(`Unsupported model type: ${modelType}`);
+  }
 }
 
 function detectFrame(model, video, modelType, label = 'Object') {
@@ -42,7 +70,7 @@ function detectFrame(model, video, modelType, label = 'Object') {
   video.parentNode.style.position = 'relative';
   video.parentNode.appendChild(canvas);
 
-  setInterval(detect, 500);
+  setInterval(detect, 1000);
 
   async function detect() {
     const rect = video.getBoundingClientRect();
