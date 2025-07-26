@@ -17,7 +17,7 @@ run:
 		-v $(PWD)/src:/app/src \
 		-v $(PWD)/public:/app/public \
 		-v $(PWD)/index.html:/app/index.html \
-		$(IMAGE_NAME)
+		$(IMAGE_NAME) sh
 
 # Stop the container (only needed for detached mode)
 stop:

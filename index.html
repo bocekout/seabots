@@ -17,16 +17,28 @@
       position: relative;
     }
 
-    .photo-container button {
+    .photo-container canvas {
+      opacity: 60%;
       position: absolute;
-      top:0;
-      right:0;
+      top: 0;
+      left: 0;
     }
 
-    .close {
+    .photo-container button {
+      position: absolute;
+      top: 0;
+      right: 0;
       background: none;
       border: none;
       color: white;
+    }
+
+    button.scan {
+      right: 16px;
+    }
+
+    .scan:before {
+      content: '🔍';
     }
 
     .close::before {
@@ -38,12 +50,15 @@
 <body>
   <div id="video-container">
     <video id="video" width="720" height="560" autoplay muted></video>
+    <canvas id="output" width="720" height="560" style="position: absolute; top: 0; left: 0;"></canvas>
   </div>
   <div>
     <button id="capture">Click!</button>
   </div>
   <div id="photos"></div>
-  <script type="module" src="./src/camera.js"></script>
+  <!-- <script type="module" src="./src/camera.js"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script type="module" src="./src/segmenter.js"></script>
 </body>
 
 </html>
