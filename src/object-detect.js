@@ -25,12 +25,12 @@ navigator.mediaDevices.getUserMedia({ video: true })
 
   video.addEventListener('loadeddata', () => {
     // console.log('Video data loaded');
-    detectFrame(model, video);
+    detectFrame(model, video, 'object');
     console.log('video loaded');
   });
 });
 
-function detectFrame(model, video) {
+function detectFrame(model, video, label = 'object') {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
@@ -47,8 +47,7 @@ function detectFrame(model, video) {
 
   setInterval(detect, 500);
 
-async function detect() {
-    // Get bounding box each time in case layout shifts
+  async function detect() {
     const rect = video.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
@@ -67,12 +66,11 @@ async function detect() {
       ctx.font = '14px sans-serif';
       ctx.fillStyle = '#00FFFF';
       ctx.fillText(
-        `${pred.class} (${(pred.score * 100).toFixed(1)}%)`,
+        `${label}: ${pred.class} (${(pred.score * 100).toFixed(1)}%)`,
         x,
         y > 10 ? y - 5 : 10
       );
     });
-
   }
 
   detect();
